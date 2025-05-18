@@ -3,17 +3,28 @@ const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
-const sgMail = require('@sendgrid/mail');
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const app = express();
-app.use(cors()); 
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.post('/send-email', (req, res) => {
     const { name, email, subject, message } = req.body;
+
+    // Basic Input Validation
+    if (!name || !email || !subject || !message) {
+        return res.status(400).send('All fields are required');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).send('Invalid email address');
+    }
+
+    if (message.length < 10) {
+        return res.status(400).send('Message is too short');
+    }
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -40,7 +51,7 @@ app.post('/send-email', (req, res) => {
     });
 });
 
+// Start Server
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
-
